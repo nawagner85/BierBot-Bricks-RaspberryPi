@@ -12,7 +12,7 @@ config = {
     },
     "apikey": "",
     "device_id": "",
-    "temp_sensor_type: "",
+    "temp_sensor_type": "",
     "temperature_sensors": [],
     "temperature_sensors_pt100": [],
     "relays": []
