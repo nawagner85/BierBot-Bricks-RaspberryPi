@@ -7,6 +7,8 @@ import yaml # reading the config
 import os
 import RPi.GPIO as GPIO 
 from w1thermsensor import W1ThermSensor
+from max31865 import max31865
+
 
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -45,7 +47,7 @@ def initRelays():
         logging.info(f"initializing relay {i+1} (GPIO {gpio_number})...")
         GPIO.setup(gpio_number, GPIO.OUT)
         GPIO.output(gpio_number, 0)
-        
+            
         
 def setRelay(number=0, state=0):
     # number relay number in config
@@ -92,21 +94,41 @@ def request():
         logging.info(f"set relay {i} to {value}")
     
     # add temperatures to request
-    for i, sensor_id in enumerate(config["temperature_sensors"]):
-        key = f"s_number_temp_{i}"
-        try:
-            sensor = W1ThermSensor(sensor_id=sensor_id)
-            temperature = sensor.get_temperature()
-            last_temps[sensor_id] = temperature
-        except:
-            logging.error("sensor was not ready, using last temp")
-            if sensor_id in last_temps:
-                temperature = last_temps[sensor_id]
-            else:
-                temperature = -42
-        value = str(temperature)
-        post_fields[key] = value
-        logging.info(f"set tempsensor {i} with id {sensor_id} to {temperature}")
+    # for onewire
+    if config["temp_sensor_type"] == 'OneWire':
+        for i, sensor_id in enumerate(config["temperature_sensors"]):
+            key = f"s_number_temp_{i}"
+            try:
+                sensor = W1ThermSensor(sensor_id=sensor_id)
+                temperature = sensor.get_temperature()
+                last_temps[sensor_id] = temperature
+            except:
+                logging.error("sensor was not ready, using last temp")
+                if sensor_id in last_temps:
+                    temperature = last_temps[sensor_id]
+                else:
+                    temperature = -42
+            value = str(temperature)
+            post_fields[key] = value
+            logging.info(f"set tempsensor {i} with id {sensor_id} to {temperature}")
+    #for pt100
+    elif config["temp_sensor_type"] == 'Pt100': 
+        for i, pt100 in enumerate(config["temperature_sensors_pt100"]):
+            key = f"s_number_temp_{i}"
+            try:
+                #sensor = W1ThermSensor(sensor_id=sensor_id)
+                #temperature = sensor.get_temperature()
+                temperature = 123
+                last_temps[pt100["pt_id"]] = temperature
+            except:
+                logging.error("sensor was not ready, using last temp")
+                if pt100["pt_id"] in last_temps:
+                    temperature = last_temps[pt100["pt_id"]]
+                else:
+                    temperature = -42
+            value = str(temperature)
+            post_fields[key] = value
+            logging.info(f"set tempsensor {i} with id {pt100['pt_id']} to {temperature}")
 
     response = requests.get(url, params=post_fields)
     
