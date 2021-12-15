@@ -18,7 +18,6 @@ config = {
     "relays": []
 }
 
-
 @click.command()
 @click.option('--apikey', "-a",
               prompt='Please enter your API key from bricks.bierbot.com',
@@ -50,42 +49,40 @@ def main(apikey, platform, relays):
     #What type of temp sensor?
     temp_type = click.prompt(f"Please select a type of temp sensor: a:OneWire, b:Pt1000", type=click.Choice(['a', 'b']))
     
-    switch(temp_type) : {
-        case 'a' :
-        {
-            config["temp_sensor_type"] = "OneWire"
-            scan = click.confirm(f"Do you want to scan for temperature probes now?",
-                  default="y")
-            n_temperature_probes_found = 0
-            if scan:
-                temperature_sensor_ids = []
+    if temp_type=='a':
+        config["temp_sensor_type"] = "OneWire"
+        scan = click.confirm(f"Do you want to scan for temperature probes now?",
+              default="y")
+        n_temperature_probes_found = 0
+        if scan:
+            temperature_sensor_ids = []
+    
+        for sensor in W1ThermSensor.get_available_sensors():
+            click.echo("Sensor found: %s (T=%.2f°C)" % (sensor.id, sensor.get_temperature()))
+            temperature_sensor_ids.append(sensor.id)
         
-             for sensor in W1ThermSensor.get_available_sensors():
-                    click.echo("Sensor found: %s (T=%.2f°C)" % (sensor.id, sensor.get_temperature()))
-                    temperature_sensor_ids.append(sensor.id)
-            
-            n_temperature_probes_found = len(temperature_sensor_ids)
-            click.echo(f"{n_temperature_probes_found} temperature probes found")
+        n_temperature_probes_found = len(temperature_sensor_ids)
+        click.echo(f"{n_temperature_probes_found} temperature probes found")
 
-            for tsId in temperature_sensor_ids:
-                click.echo(f"saving sensor {tsId} to config..")
-                config["temperature_sensors"].append(tsId)
-        }
-        case 'b' :
-        {
-            config["temp_sensor_type"] = "Pt100"
-            num_pt100 = click.prompt='How many Pt100s do you want to configure?', type=click.INT)
-            for i in range(0, int(num_pt100)) :
-                pt_id = click.prompt(f"Please enter a numerical ID for Pt100 {i+1} (e.g. 12)",
-                         type=click.INT)
-                gpio = click.prompt(f"Please enter the GPIO number for Pt100 {i+1} (e.g. GPIO26 would be 37)",
-                         type=click.INT)
-                click.echo(f"setting Pt100 {i+1} to ID{pt_id} on GPIO{gpio} ..")
-            config["temperature_sensors_pt100"].append({
-                "pt_id": pt_id,
-                "gpio": gpio
-            })
-        }
+        for tsId in temperature_sensor_ids:
+            click.echo(f"saving sensor {tsId} to config..")
+            config["temperature_sensors"].append(tsId)
+    
+    elif temp_type=='b':
+        config["temp_sensor_type"] = "Pt100"
+        num_pt100 = click.prompt(f"How many Pt100s do you want to configure?", type=click.INT)
+        for i in range(0, int(num_pt100)) :
+            pt_id = click.prompt(f"Please enter a numerical ID for Pt100 {i+1} (e.g. 12)",
+                     type=click.INT)
+            gpio = click.prompt(f"Please enter the GPIO number for Pt100 {i+1} (e.g. GPIO26 would be 37)",
+                     type=click.INT)
+            click.echo(f"setting Pt100 {i+1} to ID{pt_id} on GPIO{gpio} ..")
+            n_temperature_probes_found = num_pt100
+        config["temperature_sensors_pt100"].append({
+            "pt_id": pt_id,
+            "gpio": gpio
+        })
+
 
     config["apikey"] = apikey
     config["device_id"] = "python_" + platform + "_" + str(uuid.uuid1())
