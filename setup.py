@@ -12,7 +12,9 @@ config = {
     },
     "apikey": "",
     "device_id": "",
+    "temp_sensor_type: "",
     "temperature_sensors": [],
+    "temperature_sensors_pt100": [],
     "relays": []
 }
 
@@ -46,10 +48,12 @@ def main(apikey, platform, relays):
             "invert": invert
         })
     #What type of temp sensor?
-    temp_type = click.prompt(f"Please select a type of temp sensor: a:OneWire, b:Pt1000", type=click.Choice(['a', 'b'])
+    temp_type = click.prompt(f"Please select a type of temp sensor: a:OneWire, b:Pt1000", type=click.Choice(['a', 'b']))
+    
     switch(temp_type) {
         case 'a' :
         {
+            config["temp_sensor_type"] = "OneWire"
             scan = click.confirm(f"Do you want to scan for temperature probes now?",
                   default="y")
             n_temperature_probes_found = 0
@@ -69,6 +73,7 @@ def main(apikey, platform, relays):
         }
         case 'b' :
         {
+            config["temp_sensor_type"] = "Pt100"
             num_pt100 = click.prompt='How many Pt100s do you want to configure?', type=click.INT)
             for i in range(0, int(num_pt100)) :
                 pt_id = click.prompt(f"Please enter a numerical ID for Pt100 {i+1} (e.g. 12)",
