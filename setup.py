@@ -46,7 +46,7 @@ def main(apikey, platform, relays):
             "invert": invert
         })
     #What type of temp sensor?
-    temp_type = click.prompt(f"Please select a type of temp sensor: a:OneWire, b:Pt1000")
+    temp_type = click.prompt(f"Please select a type of temp sensor: a:OneWire, b:Pt1000", type=click.Choice(['a', 'b'])
     switch(temp_type) {
         case 'a' :
         {
